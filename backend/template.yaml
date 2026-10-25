@@ -1,0 +1,184 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Infraestructura Serverless para la Plataforma Alumco / Multi-Tenant con
+  DynamoDB NoSQL, Clean Architecture, Circuit Breaker, Bulkhead y Despliegue Canario (SAM Canary Deployment).
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: nodejs22.x
+    Architectures:
+      - arm64
+    Environment:
+      Variables:
+        DYNAMODB_TABLE_NAME: !Ref AlumcoDynamoTable
+        APP_ENV: production
+        CANARY_TRAFFIC_RATIO: '10'
+
+Resources:
+  # ==============================================================================
+  # BASE DE DATOS NOSQL: AMAZON DYNAMODB (Esquema Particionado Multi-Tenant)
+  # ==============================================================================
+  AlumcoDynamoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: AlumcoPlatformTable
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # ==============================================================================
+  # ALMACENAMIENTO DE ARCHIVOS: AMAZON S3 (Buckets para PDFs y Certificados)
+  # ==============================================================================
+  CertificatesAndDocsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'alumco-platform-assets-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # ==============================================================================
+  # PROCESAMIENTO ASÍNCRONO & BULKHEAD: AMAZON SQS (Cola de IA + DLQ)
+  # ==============================================================================
+  AiProcessingDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: AlumcoAiDeadLetterQueue.fifo
+      FifoQueue: true
+
+  AiProcessingQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: AlumcoAiProcessingQueue.fifo
+      FifoQueue: true
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt AiProcessingDeadLetterQueue.Arn
+        maxReceiveCount: 3
+
+  # ==============================================================================
+  # API GATEWAY (Entrada HTTPS unificada)
+  # ==============================================================================
+  AlumcoApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization,x-tenant-id'"
+        AllowOrigin: "'*'"
+
+  # ==============================================================================
+  # FUNCIONES AWS LAMBDA
+  # ==============================================================================
+  # 0. API Gateway Proxy Router (Manejo de todas las rutas REST serverless)
+  AlumcoApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: src/frameworks/lambdas/apiHandler.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AlumcoDynamoTable
+        - SESCrudPolicy:
+            IdentityName: "*"
+      Events:
+        ProxyApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AlumcoApiGateway
+            Path: /{proxy+}
+            Method: ANY
+        RootApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AlumcoApiGateway
+            Path: /
+            Method: ANY
+
+  # 1. Caso de Uso Crítico: Rendir Evaluación (Canary10Percent5Minutes)
+  SubmitEvaluationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: src/frameworks/lambdas/submitEvaluationHandler.handler
+      AutoPublishAlias: live
+      DeploymentPreference:
+        Type: Canary10Percent5Minutes # Despliegue Canario SAM: 10% tráfico por 5 mins
+        Alarms:
+          - !Ref CanaryErrorAlarm
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AlumcoDynamoTable
+        - SESCrudPolicy:
+            IdentityName: "*"
+      Events:
+        SubmitApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AlumcoApiGateway
+            Path: /api/evaluations/submit
+            Method: POST
+
+  # 2. Caso de Uso: Generar Curso desde PDF (Aislamiento Bulkhead con Concurrencia Reservada)
+  GenerateCourseAiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: src/frameworks/lambdas/generateCourseHandler.handler
+      ReservedConcurrentExecutions: 2 # Bulkhead: no satura el pool general de Lambdas
+      Timeout: 120
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AlumcoDynamoTable
+        - SQSReceiveMessagePolicy:
+            QueueArn: !GetAtt AiProcessingQueue.Arn
+      Events:
+        SqsTrigger:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt AiProcessingQueue.Arn
+            BatchSize: 1
+
+  # 3. Alarma CloudWatch para Rollback automático del Canary
+  CanaryErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: 'Alarma de fallas en Lambda para Rollback automático del despliegue Canario'
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref SubmitEvaluationFunction
+        - Name: Resource
+          Value: !Sub '${SubmitEvaluationFunction}:live'
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 2
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+
+Outputs:
+  ApiUrl:
+    Description: 'URL pública del API Gateway para la plataforma'
+    Value: !Sub 'https://${AlumcoApiGateway}.execute-api.${AWS::Region}.amazonaws.com/prod/'
+  DynamoTable:
+    Description: 'Tabla DynamoDB NoSQL Multi-Tenant'
+    Value: !Ref AlumcoDynamoTable
+  S3Bucket:
+    Description: 'Bucket S3 para certificados y PDFs'
+    Value: !Ref CertificatesAndDocsBucket
