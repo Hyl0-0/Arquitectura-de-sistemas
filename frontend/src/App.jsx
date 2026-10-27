@@ -207,15 +207,17 @@ function AppContent() {
             </button>
           </div>
 
-          {/* Botón rápido de branding */}
-          <button
-            onClick={() => setIsBrandingModalOpen(true)}
-            className="btn btn-secondary"
-            style={{ padding: '0.4rem 0.75rem', fontSize: '0.78rem' }}
-            title="Personalizar colores y logo"
-          >
-            🎨 Theming
-          </button>
+          {/* Botón rápido de branding (solo Admin TI) */}
+          {activeRole === 'ADMIN' && (
+            <button
+              onClick={() => setIsBrandingModalOpen(true)}
+              className="btn btn-secondary"
+              style={{ padding: '0.4rem 0.75rem', fontSize: '0.78rem' }}
+              title="Personalizar colores y logo"
+            >
+              🎨 Theming
+            </button>
+          )}
 
           {/* Selector de Modo Claro / Modo Oscuro */}
           <button
@@ -231,8 +233,8 @@ function AppContent() {
 
       {/* 2. CONTENEDOR PRINCIPAL */}
       <main className="main-wrapper">
-        {/* Banner de Control Canario (AWS SAM / Traffic-Shifting) */}
-        <CanaryController currentTenantId={currentTenantId} />
+        {/* Banner de Control Canario (AWS SAM / Traffic-Shifting), solo Admin TI */}
+        {activeRole === 'ADMIN' && <CanaryController currentTenantId={currentTenantId} />}
 
         {/* 3. VISTAS SEGÚN EL ROL ACTIVO */}
         {activeRole === 'COLABORADOR' && (

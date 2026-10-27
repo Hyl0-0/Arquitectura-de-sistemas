@@ -1,5 +1,12 @@
 import { Attempt, Certificate } from '../domain/entities/ResilienceAndAssessments.js';
 
+// Error de regla de negocio con su código HTTP (404, 403...), para no responder 500
+function businessError(message, statusCode) {
+  const err = new Error(message);
+  err.statusCode = statusCode;
+  return err;
+}
+
 export class SubmitEvaluationUseCase {
   constructor({ attemptRepository, courseRepository, certificateRepository, notificationService, userRepository }) {
     this.attemptRepository = attemptRepository;
@@ -13,13 +20,14 @@ export class SubmitEvaluationUseCase {
     // 1. Obtener el curso y su evaluación
     const course = await this.courseRepository.getById(tenantId, courseId);
     if (!course || !course.evaluacion) {
-      throw new Error('Curso o evaluación no encontrada');
+      throw businessError('Curso o evaluación no encontrada', 404);
     }
 
     // 2. Obtener intentos previos del colaborador
     const previousAttempts = await this.attemptRepository.getByUserAndCourse(userId, courseId);
     if (previousAttempts.length >= 2) {
-      throw new Error('Has alcanzado el límite máximo de 2 intentos permitidos para esta evaluación');
+      // 403: regla de negocio (bloqueado), no una falla del servidor
+      throw businessError('Has alcanzado el límite máximo de 2 intentos permitidos para esta evaluación', 403);
     }
 
     const currentAttemptNro = previousAttempts.length + 1;

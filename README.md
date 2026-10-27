@@ -33,14 +33,17 @@ Permite adaptar en caliente la identidad visual y temática de la plataforma sin
   * **Control de 2 Intentos:** Máximo 2 intentos. Si reprueba el 1°, se informa el intento restante; si reprueba el 2°, se bloquea la evaluación y se dispara una alerta de escalamiento hacia la administración vía Amazon SES.
 * **👨‍🏫 Profesor (Human-in-the-Loop):**
   * Soporte para múltiples docentes (Prof. Andrea Soto, Prof. Mauricio Morales).
+  * Creación manual de cursos (módulos + preguntas), que se publican directamente.
   * Bandeja de borradores de cursos propuestos por la IA.
   * Edición pedagógica de módulos y preguntas antes de su publicación.
-* **📋 Jefatura:**
+* **📋 Jefatura (Valentina Garrido, Carlos Mendoza):**
   * Creación de cursos manual o asistida por IA mediante extracción de documentos.
+  * Reporte de cumplimiento por sede (ELEAM Hualpén y ELEAM Coyhaique) y alertas de colaboradores reprobados.
   * Protección con **Circuit Breaker** (si se registran 5 fallas consecutivas de la API externa, se abre durante 60 segundos y recomienda la creación manual).
   * Aislamiento **Bulkhead** (máximo 2 ejecuciones concurrentes de IA para no degradar el rendimiento general).
-* **⚙️ Administrador & DevOps:**
+* **⚙️ Administrador TI & DevOps:**
   * Reporte de cumplimiento por sede (ELEAM Hualpén y ELEAM Coyhaique).
+  * Personalización de marca y colores, y control del despliegue canario.
   * Consola de monitoreo de telemetría de resiliencia del Circuit Breaker (estados `CLOSED`, `OPEN`, `HALF_OPEN`).
   * Registro de alertas de escalamiento emitidas por Amazon SES.
 
@@ -175,10 +178,17 @@ Si no tienes AWS CLI o SAM CLI instalados en tu computadora local:
 | **Javier Alcaino** | Colaborador (Alumno) | ELEAM Coyhaique | Auxiliar de Servicio |
 | **Prof. Andrea Soto** | Profesor (HITL) | ELEAM Hualpén | Coordinadora Académica & Revisora |
 | **Prof. Mauricio Morales** | Profesor (HITL) | ELEAM Coyhaique | Enfermero Supervisor & Revisor |
+| **Valentina Garrido** | Jefatura | ELEAM Hualpén | Representante Legal & Directora Ejecutiva |
 | **Carlos Mendoza** | Jefatura | ELEAM Hualpén | Jefe de Protocolos y Cumplimiento SENAMA |
-| **Valentina Garrido** | Administrador & DevOps | ELEAM Hualpén | Directora de Operaciones & RRHH |
+| **Rodrigo Fuentes** | Administrador TI & DevOps | ELEAM Hualpén | Encargado de Sistemas (TI) & DevOps |
 
 *También puedes registrar nuevos colaboradores o profesores en cualquier momento utilizando el botón **`🔑 Login / Registro`** en la esquina superior izquierda de la aplicación.*
+
+---
+
+## 🚧 Pendientes (Trabajo Futuro)
+
+* **Editar y archivar cursos publicados (Profesor y Jefatura):** hoy solo se pueden editar los borradores generados por IA antes de aprobarlos. Se usará el estado `ARCHIVADO` (ya definido en `Course.js`) en vez de borrar, para conservar el historial de certificados exigido por SENAMA.
 
 ---
 

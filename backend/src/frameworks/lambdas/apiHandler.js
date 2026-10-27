@@ -15,7 +15,7 @@ import {
   CanaryConfigRepository
 } from '../../adapters/ServicesAndCanary.js';
 import { SubmitEvaluationUseCase } from '../../usecases/SubmitEvaluationUseCase.js';
-import { GenerateCourseFromPdfUseCase, ReviewDraftCourseUseCase } from '../../usecases/AiAndCourseWorkflows.js';
+import { GenerateCourseFromPdfUseCase, ReviewDraftCourseUseCase, CreateManualCourseUseCase } from '../../usecases/AiAndCourseWorkflows.js';
 import { TenantThemingUseCase, CanaryRoutingUseCase } from '../../usecases/TenantAndCanaryUseCases.js';
 import { populateInitialData } from '../seedData.js';
 
@@ -49,6 +49,10 @@ const generateCourseUseCase = new GenerateCourseFromPdfUseCase({
 });
 
 const reviewDraftUseCase = new ReviewDraftCourseUseCase({
+  courseRepository: courseRepo
+});
+
+const createManualCourseUseCase = new CreateManualCourseUseCase({
   courseRepository: courseRepo
 });
 
@@ -167,6 +171,24 @@ export const handler = async (event) => {
       return { statusCode: 200, headers, body: JSON.stringify(courses) };
     }
 
+    // ---- CREAR CURSO MANUAL (Profesor o Jefatura) ----
+    if (pathname === '/api/courses' && method === 'POST') {
+      const tid = body.tenantId || tenantIdHeader;
+      try {
+        const result = await createManualCourseUseCase.execute({
+          tenantId: tid,
+          titulo: body.titulo,
+          descripcion: body.descripcion,
+          modulos: body.modulos,
+          preguntas: body.preguntas,
+          creadoPor: body.creadoPor || 'usr_profesor'
+        });
+        return { statusCode: 201, headers, body: JSON.stringify(result) };
+      } catch (err) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: err.message }) };
+      }
+    }
+
     if (pathname.startsWith('/api/courses/') && method === 'GET') {
       const courseId = pathname.replace('/api/courses/', '');
       const tid = query.tenantId || tenantIdHeader;
@@ -226,7 +248,8 @@ export const handler = async (event) => {
     // ---- REPORTES AVANCE ----
     if (pathname === '/api/reports/advance' && method === 'GET') {
       const tid = query.tenantId || tenantIdHeader;
-      const users = await userRepo.listByTenantAndSede(tid);
+      // Solo los colaboradores (alumnos) cuentan para el cumplimiento
+      const users = (await userRepo.listByTenantAndSede(tid)).filter(u => u.role === User.ROLES.COLABORADOR);
       const attempts = await attemptRepo.listAllAttempts(tid);
 
       const statsBySede = {};
@@ -326,7 +349,7 @@ export const handler = async (event) => {
   } catch (error) {
     console.error('Error interno en Lambda:', error);
     return {
-      statusCode: 500,
+      statusCode: error.statusCode || 500,
       headers,
       body: JSON.stringify({ error: error.message || 'Error interno del servidor en AWS Lambda' })
     };

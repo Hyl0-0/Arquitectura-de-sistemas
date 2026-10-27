@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE } from '../config';
+import { ManualCourseForm } from './ManualCourseForm';
 
 export function ProfesorView({ currentTenant, currentUser }) {
+  const [activeTab, setActiveTab] = useState('bandeja'); // 'bandeja' o 'manual'
   const [draftCourses, setDraftCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [editingModulos, setEditingModulos] = useState([]);
@@ -82,15 +84,35 @@ export function ProfesorView({ currentTenant, currentUser }) {
             <span>👨‍🏫</span> Bandeja Docente: Human-in-the-Loop
           </h2>
           <p className="section-subtitle">
-            Revisión pedagógica y aprobación de borradores generados por IA (HITL) • Docente en sesión: <strong style={{ color: 'var(--text-main)' }}>{currentUser.name}</strong> ({currentUser.cargo})
+            Revisión pedagógica de borradores generados por IA (HITL) y creación manual de cursos • Docente en sesión: <strong style={{ color: 'var(--text-main)' }}>{currentUser.name}</strong> ({currentUser.cargo})
           </p>
         </div>
-        <button onClick={fetchDraftCourses} className="btn btn-secondary" style={{ fontSize: '0.78rem' }}>
-          🔄 Actualizar Borradores
+        {activeTab === 'bandeja' && (
+          <button onClick={fetchDraftCourses} className="btn btn-secondary" style={{ fontSize: '0.78rem' }}>
+            🔄 Actualizar Borradores
+          </button>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+        <button
+          onClick={() => setActiveTab('bandeja')}
+          className={`btn ${activeTab === 'bandeja' ? 'btn-primary' : 'btn-secondary'}`}
+        >
+          ✏️ Revisar Borradores IA
+        </button>
+        <button
+          onClick={() => setActiveTab('manual')}
+          className={`btn ${activeTab === 'manual' ? 'btn-primary' : 'btn-secondary'}`}
+        >
+          ✍️ Crear Curso Manual
         </button>
       </div>
 
-      {selectedCourse ? (
+      {activeTab === 'manual' ? (
+        <ManualCourseForm currentTenant={currentTenant} currentUser={currentUser} />
+      ) : selectedCourse ? (
         <div className="glass-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--surface-border)', paddingBottom: '1rem' }}>
             <div>

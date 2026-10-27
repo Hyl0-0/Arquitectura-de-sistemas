@@ -19,7 +19,7 @@ import {
 } from '../adapters/ServicesAndCanary.js';
 
 import { SubmitEvaluationUseCase } from '../usecases/SubmitEvaluationUseCase.js';
-import { GenerateCourseFromPdfUseCase, ReviewDraftCourseUseCase } from '../usecases/AiAndCourseWorkflows.js';
+import { GenerateCourseFromPdfUseCase, ReviewDraftCourseUseCase, CreateManualCourseUseCase } from '../usecases/AiAndCourseWorkflows.js';
 import { TenantThemingUseCase, CanaryRoutingUseCase } from '../usecases/TenantAndCanaryUseCases.js';
 import { populateInitialData } from './seedData.js';
 
@@ -54,6 +54,10 @@ const generateCourseUseCase = new GenerateCourseFromPdfUseCase({
 });
 
 const reviewDraftUseCase = new ReviewDraftCourseUseCase({
+  courseRepository: courseRepo
+});
+
+const createManualCourseUseCase = new CreateManualCourseUseCase({
   courseRepository: courseRepo
 });
 
@@ -172,6 +176,25 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, courses);
     }
 
+    // ---- CREAR CURSO MANUAL (Profesor o Jefatura) ----
+    if (pathname === '/api/courses' && req.method === 'POST') {
+      const body = await parseBody(req);
+      const tid = body.tenantId || tenantIdHeader;
+      try {
+        const result = await createManualCourseUseCase.execute({
+          tenantId: tid,
+          titulo: body.titulo,
+          descripcion: body.descripcion,
+          modulos: body.modulos,
+          preguntas: body.preguntas,
+          creadoPor: body.creadoPor || 'usr_profesor'
+        });
+        return sendJson(res, 201, result);
+      } catch (err) {
+        return sendJson(res, 400, { error: err.message });
+      }
+    }
+
     if (pathname.startsWith('/api/courses/') && req.method === 'GET') {
       const courseId = pathname.replace('/api/courses/', '');
       const tid = query.tenantId || tenantIdHeader;
@@ -232,7 +255,8 @@ const server = http.createServer(async (req, res) => {
     // ---- REPORTES DE AVANCE POR SEDE (ADMIN & JEFATURA) ----
     if (pathname === '/api/reports/advance' && req.method === 'GET') {
       const tid = query.tenantId || tenantIdHeader;
-      const users = await userRepo.listByTenantAndSede(tid);
+      // Solo los colaboradores (alumnos) cuentan para el cumplimiento
+      const users = (await userRepo.listByTenantAndSede(tid)).filter(u => u.role === User.ROLES.COLABORADOR);
       const attempts = await attemptRepo.listAllAttempts(tid);
 
       const statsBySede = {};
@@ -324,7 +348,7 @@ const server = http.createServer(async (req, res) => {
 
   } catch (err) {
     console.error('Error interno en el servidor:', err);
-    return sendJson(res, 500, { error: err.message || 'Error interno del servidor' });
+    return sendJson(res, err.statusCode || 500, { error: err.message || 'Error interno del servidor' });
   }
 });
 
