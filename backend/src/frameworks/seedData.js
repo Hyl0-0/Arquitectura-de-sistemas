@@ -4,6 +4,13 @@ import { Course } from '../domain/entities/Course.js';
 import { Evaluation } from '../domain/entities/Evaluation.js';
 
 export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) {
+  // Evitar sobreescritura si los datos ya fueron poblados en DynamoDB
+  const existingTenant = await tenantRepo.getById('alumco');
+  if (existingTenant) {
+    console.log('ℹ️ Base de datos ya inicializada previamente. Omitiendo siembra de datos.');
+    return;
+  }
+
   console.log('🌱 Inicializando datos base para Alumco y organizaciones multi-tenant...');
 
   // 1. Tenant Base: Alumco ONG

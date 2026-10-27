@@ -33,6 +33,11 @@ export const handler = async (event) => {
         creadoPor: payload.creadoPor || 'usr_jefatura',
         profesorRevisorId: payload.profesorRevisorId || 'usr_profesor'
       });
+
+      if (res.status === 'ERROR') {
+        throw new Error(res.error || res.message || 'Fallo en la generación de curso con IA');
+      }
+
       results.push(res);
     } catch (err) {
       console.error('Error procesando mensaje SQS:', err);

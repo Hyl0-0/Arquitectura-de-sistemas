@@ -1,3 +1,5 @@
+import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+
 // Implementación del Patrón Bulkhead:
 // Aísla la capacidad de procesamiento de IA para que no consuma los recursos que usan los colaboradores al rendir exámenes.
 export class BulkheadQueue {
@@ -40,6 +42,10 @@ export class SesNotificationService {
     this.maxRetries = maxRetries;
     this.baseDelayMs = baseDelayMs;
     this.sentEmails = [];
+    this.isAwsAvailable = Boolean(process.env.AWS_REGION && (process.env.AWS_ACCESS_KEY_ID || process.env.AWS_EXECUTION_ENV));
+    if (this.isAwsAvailable) {
+      this.sesClient = new SESClient({ region: process.env.AWS_REGION || 'us-east-1' });
+    }
   }
 
   async notifyAdminFailure({ tenantId, colaboradorNombre, colaboradorEmail, sede, cursoTitulo, puntaje }) {
@@ -48,6 +54,7 @@ export class SesNotificationService {
 
     return await this.sendWithRetry({
       to: `admin@${tenantId}.cl`,
+      from: process.env.SES_SENDER_EMAIL || `no-reply@${tenantId}.cl`,
       subject,
       body,
       type: 'ADMIN_ESCALATION'
@@ -58,10 +65,23 @@ export class SesNotificationService {
     let attempt = 0;
     while (attempt <= this.maxRetries) {
       try {
-        // En producción se utiliza SendEmailCommand de @aws-sdk/client-ses
-        // Aquí simulamos la llamada y registramos el log con timestamp
         console.log(`[RETRY - SES] Intento ${attempt + 1}/${this.maxRetries + 1} enviando notificación a ${emailData.to}`);
-        
+
+        if (this.isAwsAvailable && this.sesClient) {
+          try {
+            await this.sesClient.send(new SendEmailCommand({
+              Source: emailData.from || 'no-reply@alumco.cl',
+              Destination: { ToAddresses: [emailData.to] },
+              Message: {
+                Subject: { Data: emailData.subject, Charset: 'UTF-8' },
+                Body: { Text: { Data: emailData.body, Charset: 'UTF-8' } }
+              }
+            }));
+          } catch (awsErr) {
+            console.warn(`[RETRY - SES] Advertencia llamada SES AWS (${awsErr.message}), registrando log local...`);
+          }
+        }
+
         const record = {
           id: `email_${Date.now()}`,
           ...emailData,
@@ -96,8 +116,6 @@ export class ClaudeAiService {
   }
 
   async generateCourseFromDocument({ filename, content, tenantId }) {
-    // Si hay API key real configurada, se podría conectar directamente a la API de Claude
-    // Proporcionamos un motor de extracción inteligente que simula el resultado del workflow de Claude
     console.log(`[CLAUDE AI SERVICE] Procesando documento "${filename}" para tenant "${tenantId}"...`);
 
     // Simulamos latencia realista de análisis de PDF y tokens de Claude
@@ -186,11 +204,11 @@ export class ClaudeAiService {
   }
 }
 
-// Repositorio en memoria/DynamoDB para la configuración de Canary Deployments
+// Repositorio persistente en DynamoDB para la configuración de Canary Deployments
 export class CanaryConfigRepository {
   constructor(dbClient) {
     this.db = dbClient;
-    this.config = {
+    this.defaultConfig = {
       weight: 10, // 10% canary por defecto
       activeVersion: 'v1.1.0-canary',
       stableVersion: 'v1.0.0-stable',
@@ -203,18 +221,48 @@ export class CanaryConfigRepository {
   }
 
   async getConfig() {
-    return this.config;
+    if (this.db) {
+      const item = await this.db.getItem('SYSTEM#CANARY', 'CONFIG');
+      if (item) {
+        return item;
+      }
+      const initial = {
+        PK: 'SYSTEM#CANARY',
+        SK: 'CONFIG',
+        ...this.defaultConfig
+      };
+      await this.db.putItem(initial);
+      return initial;
+    }
+    return { ...this.defaultConfig };
   }
 
   async updateWeight(weight) {
-    this.config.weight = weight;
-    return this.config;
+    const current = await this.getConfig();
+    current.weight = weight;
+    if (this.db) {
+      await this.db.putItem({
+        PK: 'SYSTEM#CANARY',
+        SK: 'CONFIG',
+        ...current
+      });
+    }
+    return current;
   }
 
   async addPilotTenant(tenantId) {
-    if (!this.config.pilotTenants.includes(tenantId)) {
-      this.config.pilotTenants.push(tenantId);
+    const current = await this.getConfig();
+    if (!current.pilotTenants) current.pilotTenants = [];
+    if (!current.pilotTenants.includes(tenantId)) {
+      current.pilotTenants.push(tenantId);
+      if (this.db) {
+        await this.db.putItem({
+          PK: 'SYSTEM#CANARY',
+          SK: 'CONFIG',
+          ...current
+        });
+      }
     }
-    return this.config;
+    return current;
   }
 }

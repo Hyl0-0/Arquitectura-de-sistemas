@@ -18,6 +18,9 @@ import { SubmitEvaluationUseCase } from '../../usecases/SubmitEvaluationUseCase.
 import { GenerateCourseFromPdfUseCase, ReviewDraftCourseUseCase, CreateManualCourseUseCase } from '../../usecases/AiAndCourseWorkflows.js';
 import { TenantThemingUseCase, CanaryRoutingUseCase } from '../../usecases/TenantAndCanaryUseCases.js';
 import { populateInitialData } from '../seedData.js';
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
+
+const sqsClient = process.env.AI_QUEUE_URL ? new SQSClient({ region: process.env.AWS_REGION || 'us-east-1' }) : null;
 
 // Adaptadores e Infraestructura persistentes en memoria del runtime de Lambda
 const dbClient = new DynamoDbClientWrapper();
@@ -202,6 +205,41 @@ export const handler = async (event) => {
     // ---- IA GENERAR CURSO ----
     if (pathname === '/api/courses/generate-ai' && method === 'POST') {
       const tid = body.tenantId || tenantIdHeader;
+
+      // Si existe cola SQS configurada (modo AWS Serverless asíncrono con Bulkhead)
+      if (process.env.AI_QUEUE_URL && sqsClient) {
+        try {
+          const payload = {
+            tenantId: tid,
+            pdfFilename: body.filename || 'Protocolo_Seguridad_2026.pdf',
+            pdfContentOrText: body.content || '',
+            creadoPor: body.creadoPor || 'usr_jefatura',
+            profesorRevisorId: body.profesorRevisorId || 'usr_profesor'
+          };
+
+          const sendCmd = new SendMessageCommand({
+            QueueUrl: process.env.AI_QUEUE_URL,
+            MessageBody: JSON.stringify(payload),
+            MessageGroupId: `tenant_${tid}`,
+            MessageDeduplicationId: `ai_gen_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
+          });
+
+          const sqsRes = await sqsClient.send(sendCmd);
+          return {
+            statusCode: 202,
+            headers,
+            body: JSON.stringify({
+              status: 'SUCCESS',
+              message: 'Solicitud encolada en Amazon SQS (FIFO) para procesamiento asíncrono en Bulkhead.',
+              messageId: sqsRes.MessageId
+            })
+          };
+        } catch (sqsErr) {
+          console.warn('Fallo al encolar en SQS, ejecutando en modo directo fallback:', sqsErr.message);
+        }
+      }
+
+      // Modo de fallback local o directo
       const result = await generateCourseUseCase.execute({
         tenantId: tid,
         pdfFilename: body.filename || 'Protocolo_Seguridad_2026.pdf',

@@ -91,11 +91,16 @@ Resources:
     Properties:
       CodeUri: ./
       Handler: src/frameworks/lambdas/apiHandler.handler
+      Environment:
+        Variables:
+          AI_QUEUE_URL: !Ref AiProcessingQueue
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref AlumcoDynamoTable
         - SESCrudPolicy:
             IdentityName: "*"
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt AiProcessingQueue.QueueName
       Events:
         ProxyApi:
           Type: Api
