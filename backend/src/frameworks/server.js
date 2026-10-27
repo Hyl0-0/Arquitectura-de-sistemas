@@ -158,7 +158,7 @@ const server = http.createServer(async (req, res) => {
         name: body.name,
         email: body.email,
         role: body.role || User.ROLES.COLABORADOR,
-        sede: body.sede || 'Sede Central (Santiago)',
+        sede: body.sede || 'ELEAM Hualpén (Biobío)',
         cargo: body.cargo || 'Colaborador en Inducción'
       });
       await userRepo.save(newUser);

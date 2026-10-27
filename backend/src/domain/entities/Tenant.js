@@ -16,7 +16,7 @@ export class Tenant {
       text: '#f8fafc',
       muted: '#94a3b8'
     },
-    sedes = ['Santiago', 'Concepción', 'Antofagasta'],
+    sedes = ['ELEAM Hualpén (Biobío)', 'ELEAM Coyhaique (Aysén)'],
     createdAt = new Date().toISOString()
   }) {
     if (!id || !name) {
