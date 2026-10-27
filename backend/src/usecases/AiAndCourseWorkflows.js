@@ -83,6 +83,57 @@ export class GenerateCourseFromPdfUseCase {
   }
 }
 
+export class CreateManualCourseUseCase {
+  constructor({ courseRepository }) {
+    this.courseRepository = courseRepository;
+  }
+
+  async execute({ tenantId, titulo, descripcion, modulos = [], preguntas = [], creadoPor }) {
+    const courseId = `course_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+
+    // Curso creado por una persona (profesor o jefatura): no requiere revisión de la IA
+    const course = new Course({
+      id: courseId,
+      tenantId,
+      titulo,
+      descripcion,
+      origen: 'MANUAL',
+      estado: Course.STATUS.BORRADOR,
+      creadoPor,
+      modulos: modulos.map((m, idx) => ({
+        id: `m${idx + 1}`,
+        orden: idx + 1,
+        titulo: m.titulo,
+        contenido: m.contenido,
+        tiempoEstimado: m.tiempoEstimado || '10 min'
+      })),
+      evaluacion: new Evaluation({
+        id: `eval_${Date.now()}`,
+        courseId,
+        preguntas: preguntas.map((p, idx) => ({
+          id: `q${idx + 1}`,
+          enunciado: p.enunciado,
+          opciones: p.opciones,
+          respuestaCorrecta: Number(p.respuestaCorrecta)
+        })),
+        puntajeAprobacion: 70,
+        maxIntentos: 2
+      })
+    });
+
+    // Valida que tenga módulos y preguntas antes de publicarlo
+    course.aprobarYPublicar(creadoPor);
+    await this.courseRepository.save(course);
+
+    return {
+      status: 'PUBLICADO',
+      courseId: course.id,
+      course,
+      message: 'Curso manual creado y publicado. Ya está disponible para los colaboradores.'
+    };
+  }
+}
+
 export class ReviewDraftCourseUseCase {
   constructor({ courseRepository }) {
     this.courseRepository = courseRepository;

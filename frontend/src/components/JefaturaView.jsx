@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE } from '../config';
+import { ManualCourseForm } from './ManualCourseForm';
+import { ComplianceReport } from './ComplianceReport';
 
 export function JefaturaView({ currentTenant, currentUser }) {
   const [circuitBreaker, setCircuitBreaker] = useState(null);
-  const [activeTab, setActiveTab] = useState('ai'); // 'ai' o 'manual'
+  const [activeTab, setActiveTab] = useState('ai'); // 'ai', 'manual' o 'reportes'
+  const [reportData, setReportData] = useState(null);
   const [pdfFilename, setPdfFilename] = useState('Protocolo_Operacional_Alumco_2026.pdf');
   const [pdfContent, setPdfContent] = useState('');
   const [loadingAi, setLoadingAi] = useState(false);
   const [aiMessage, setAiMessage] = useState(null);
-
-  // Formulario Manual
-  const [manualTitle, setManualTitle] = useState('');
-  const [manualDesc, setManualDesc] = useState('');
-  const [manualModule, setManualModule] = useState({ titulo: '', contenido: '' });
 
   const fetchCircuitBreakerState = async () => {
     try {
@@ -25,6 +23,21 @@ export function JefaturaView({ currentTenant, currentUser }) {
       console.error('Error al consultar circuit breaker:', err);
     }
   };
+
+  const fetchReport = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/reports/advance?tenantId=${currentTenant.id}`);
+      if (res.ok) {
+        setReportData(await res.json());
+      }
+    } catch (err) {
+      console.error('Error al cargar reportes:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'reportes') fetchReport();
+  }, [activeTab, currentTenant.id]);
 
   useEffect(() => {
     fetchCircuitBreakerState();
@@ -66,7 +79,7 @@ export function JefaturaView({ currentTenant, currentUser }) {
             <span>📋</span> Gestión de Cursos e Inducciones (Jefatura)
           </h2>
           <p className="section-subtitle">
-            Creación asistida por IA (Workflow secuencial + Circuit Breaker) o creación manual de programas.
+            Creación de cursos asistida por IA (Workflow secuencial + Circuit Breaker) o manual, y seguimiento del cumplimiento por sede.
           </p>
         </div>
 
@@ -97,6 +110,12 @@ export function JefaturaView({ currentTenant, currentUser }) {
           className={`btn ${activeTab === 'manual' ? 'btn-primary' : 'btn-secondary'}`}
         >
           ✍️ Crear Curso Manual
+        </button>
+        <button
+          onClick={() => setActiveTab('reportes')}
+          className={`btn ${activeTab === 'reportes' ? 'btn-primary' : 'btn-secondary'}`}
+        >
+          📊 Reportes y Alertas
         </button>
       </div>
 
@@ -179,56 +198,18 @@ export function JefaturaView({ currentTenant, currentUser }) {
 
       {/* TAB 2: Creación manual directa */}
       {activeTab === 'manual' && (
-        <div className="glass-card">
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 600, marginBottom: '1rem' }}>
-            ✍️ Creación Directa de Curso y Módulos
-          </h3>
-          <div className="form-group">
-            <label className="form-label">Título del Curso</label>
-            <input
-              type="text"
-              value={manualTitle}
-              onChange={(e) => setManualTitle(e.target.value)}
-              className="form-input"
-              placeholder="Ej: Inducción en Movilización Segura de Residentes"
-            />
+        <ManualCourseForm currentTenant={currentTenant} currentUser={currentUser} />
+      )}
+
+      {/* TAB 3: Reportes de cumplimiento y alertas (solo lectura) */}
+      {activeTab === 'reportes' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+            <button onClick={fetchReport} className="btn btn-secondary" style={{ fontSize: '0.78rem' }}>
+              🔄 Actualizar Reportes
+            </button>
           </div>
-          <div className="form-group">
-            <label className="form-label">Descripción</label>
-            <textarea
-              rows={2}
-              value={manualDesc}
-              onChange={(e) => setManualDesc(e.target.value)}
-              className="form-textarea"
-              placeholder="Objetivos del curso y público objetivo..."
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Módulo Inicial (Título)</label>
-            <input
-              type="text"
-              value={manualModule.titulo}
-              onChange={(e) => setManualModule({ ...manualModule, titulo: e.target.value })}
-              className="form-input"
-              placeholder="Módulo 1: Procedimientos Básicos"
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Contenido del Módulo</label>
-            <textarea
-              rows={3}
-              value={manualModule.contenido}
-              onChange={(e) => setManualModule({ ...manualModule, contenido: e.target.value })}
-              className="form-textarea"
-              placeholder="Detalle de los pasos a seguir..."
-            />
-          </div>
-          <button
-            onClick={() => alert('Curso guardado en DynamoDB. Podrá agregar preguntas y publicarlo para los colaboradores.')}
-            className="btn btn-primary"
-          >
-            Guardar Curso Manual
-          </button>
+          <ComplianceReport currentTenant={currentTenant} reportData={reportData} />
         </div>
       )}
     </div>

@@ -66,16 +66,25 @@ export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) 
   });
   await tenantRepo.save(vialTenant);
 
-  // 4. Usuarios para Alumco (con los 4 roles del informe)
+  // 4. Usuarios para Alumco (4 roles; puede haber varios usuarios por rol)
   const users = [
     new User({
-      id: 'usr_admin',
+      id: 'usr_direccion',
       tenantId: 'alumco',
       name: 'Valentina Garrido',
       email: 'vgarrido@alumco.cl',
+      role: User.ROLES.JEFATURA,
+      sede: 'ELEAM Hualpén (Biobío)',
+      cargo: 'Representante Legal & Directora Ejecutiva'
+    }),
+    new User({
+      id: 'usr_admin',
+      tenantId: 'alumco',
+      name: 'Rodrigo Fuentes',
+      email: 'rfuentes@alumco.cl',
       role: User.ROLES.ADMIN,
       sede: 'ELEAM Hualpén (Biobío)',
-      cargo: 'Directora de Operaciones & RRHH'
+      cargo: 'Encargado de Sistemas (TI) & DevOps'
     }),
     new User({
       id: 'usr_jefatura',

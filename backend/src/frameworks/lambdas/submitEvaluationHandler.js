@@ -55,7 +55,7 @@ export const handler = async (event) => {
   } catch (error) {
     console.error('Error en submitEvaluationHandler:', error);
     return {
-      statusCode: 500,
+      statusCode: error.statusCode || 500,
       headers,
       body: JSON.stringify({ error: error.message || 'Error interno en Lambda' })
     };
