@@ -13,7 +13,7 @@ export class User {
     name,
     email,
     role = User.ROLES.COLABORADOR,
-    sede = 'Santiago',
+    sede = 'ELEAM Hualpén (Biobío)',
     cargo = 'Operario',
     activo = true
   }) {

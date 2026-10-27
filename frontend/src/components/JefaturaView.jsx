@@ -130,7 +130,7 @@ export function JefaturaView({ currentTenant, currentUser }) {
               value={pdfFilename}
               onChange={(e) => setPdfFilename(e.target.value)}
               className="form-input"
-              placeholder="Ej: Manual_Seguridad_Fundicion_2026.pdf"
+              placeholder="Ej: Protocolo_Prevencion_Caidas_2026.pdf"
             />
           </div>
 
@@ -141,7 +141,7 @@ export function JefaturaView({ currentTenant, currentUser }) {
               value={pdfContent}
               onChange={(e) => setPdfContent(e.target.value)}
               className="form-textarea"
-              placeholder="Pegue aquí el texto del protocolo normativo o instrucciones (ej: EPP, normas de fundición, temperatura de cubas, respuesta ante emergencias)... Escribe 'FORCE_FAIL' si deseas simular una falla de la API para probar el Circuit Breaker."
+              placeholder="Pegue aquí el texto del protocolo normativo o instrucciones (ej: prevención de caídas, administración de medicamentos, buen trato, plan de emergencias)... Escribe 'FORCE_FAIL' si deseas simular una falla de la API para probar el Circuit Breaker."
             />
           </div>
 
@@ -190,7 +190,7 @@ export function JefaturaView({ currentTenant, currentUser }) {
               value={manualTitle}
               onChange={(e) => setManualTitle(e.target.value)}
               className="form-input"
-              placeholder="Ej: Inducción de Manejo de Materiales en Altura"
+              placeholder="Ej: Inducción en Movilización Segura de Residentes"
             />
           </div>
           <div className="form-group">

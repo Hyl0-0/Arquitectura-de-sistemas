@@ -6,7 +6,7 @@ export function AuthModal({ isOpen, onClose, users, currentTenant, onSelectUser,
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('COLABORADOR');
-  const [sede, setSede] = useState(currentTenant?.sedes?.[0] || 'Sede Central (Santiago)');
+  const [sede, setSede] = useState(currentTenant?.sedes?.[0] || 'ELEAM Hualpén (Biobío)');
   const [cargo, setCargo] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -179,7 +179,7 @@ export function AuthModal({ isOpen, onClose, users, currentTenant, onSelectUser,
                 value={cargo}
                 onChange={(e) => setCargo(e.target.value)}
                 className="form-input"
-                placeholder="Ej: Técnico en Metalurgia / Prevencionista"
+                placeholder="Ej: Técnico en Enfermería (TENS) / Cuidador(a)"
               />
             </div>
 

@@ -10,7 +10,7 @@ export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) 
   const alumcoTenant = new Tenant({
     id: 'alumco',
     name: 'ONG Alumco',
-    tagline: 'Capacitación, Seguridad y Desarrollo Comunitario en Aluminio y Reciclaje',
+    tagline: 'Capacitación y Cumplimiento para el Cuidado de Personas Mayores (ELEAM)',
     logoUrl: '/logo-alumco.png',
     colors: {
       primary: '#1e3a8a',       // Azul Alumco corporativo
@@ -22,7 +22,7 @@ export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) 
       text: '#f8fafc',
       muted: '#94a3b8'
     },
-    sedes: ['Sede Central (Santiago)', 'Sede Norte (Antofagasta)', 'Sede Sur (Concepción)']
+    sedes: ['ELEAM Hualpén (Biobío)', 'ELEAM Coyhaique (Aysén)']
   });
   await tenantRepo.save(alumcoTenant);
 
@@ -74,7 +74,7 @@ export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) 
       name: 'Valentina Garrido',
       email: 'vgarrido@alumco.cl',
       role: User.ROLES.ADMIN,
-      sede: 'Sede Central (Santiago)',
+      sede: 'ELEAM Hualpén (Biobío)',
       cargo: 'Directora de Operaciones & RRHH'
     }),
     new User({
@@ -83,8 +83,8 @@ export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) 
       name: 'Carlos Mendoza',
       email: 'cmendoza@alumco.cl',
       role: User.ROLES.JEFATURA,
-      sede: 'Sede Central (Santiago)',
-      cargo: 'Jefe de Seguridad y Protocolos'
+      sede: 'ELEAM Hualpén (Biobío)',
+      cargo: 'Jefe de Protocolos y Cumplimiento SENAMA'
     }),
     new User({
       id: 'usr_profesor',
@@ -92,8 +92,8 @@ export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) 
       name: 'Prof. Andrea Soto',
       email: 'asoto@alumco.cl',
       role: User.ROLES.PROFESOR,
-      sede: 'Sede Central (Santiago)',
-      cargo: 'Coordinadora Académica & Revisor'
+      sede: 'ELEAM Hualpén (Biobío)',
+      cargo: 'Coordinadora Académica & Revisora'
     }),
     new User({
       id: 'usr_profesor2',
@@ -101,8 +101,8 @@ export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) 
       name: 'Prof. Mauricio Morales',
       email: 'mmorales@alumco.cl',
       role: User.ROLES.PROFESOR,
-      sede: 'Sede Norte (Antofagasta)',
-      cargo: 'Especialista en Prevención de Riesgos'
+      sede: 'ELEAM Coyhaique (Aysén)',
+      cargo: 'Enfermero Supervisor & Revisor'
     }),
     new User({
       id: 'usr_colaborador1',
@@ -110,8 +110,8 @@ export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) 
       name: 'Felipe Heredia',
       email: 'fheredia@alumco.cl',
       role: User.ROLES.COLABORADOR,
-      sede: 'Sede Norte (Antofagasta)',
-      cargo: 'Técnico de Fundición y Reciclaje'
+      sede: 'ELEAM Coyhaique (Aysén)',
+      cargo: 'Técnico en Enfermería (TENS)'
     }),
     new User({
       id: 'usr_colaborador2',
@@ -119,8 +119,8 @@ export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) 
       name: 'Ignacio Llarlluri',
       email: 'illarlluri@alumco.cl',
       role: User.ROLES.COLABORADOR,
-      sede: 'Sede Sur (Concepción)',
-      cargo: 'Operario de Planta'
+      sede: 'ELEAM Hualpén (Biobío)',
+      cargo: 'Cuidador de Personas Mayores'
     }),
     new User({
       id: 'usr_colaborador3',
@@ -128,8 +128,8 @@ export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) 
       name: 'Javier Alcaino',
       email: 'jalcaino@alumco.cl',
       role: User.ROLES.COLABORADOR,
-      sede: 'Sede Central (Santiago)',
-      cargo: 'Ensamblador de Estructuras'
+      sede: 'ELEAM Coyhaique (Aysén)',
+      cargo: 'Auxiliar de Servicio'
     })
   ];
 
@@ -141,8 +141,8 @@ export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) 
   const cursoPublicado = new Course({
     id: 'course_induccion_seguridad',
     tenantId: 'alumco',
-    titulo: 'Inducción de Seguridad en Plantas de Aluminio y Trabajo en Altura',
-    descripcion: 'Normativa obligatoria sobre uso de EPP, manejo de escoria a altas temperaturas y respuesta ante emergencias.',
+    titulo: 'Inducción en Cuidado Seguro de Personas Mayores (Protocolos SENAMA)',
+    descripcion: 'Capacitación obligatoria para el personal de los ELEAM sobre buen trato, prevención de caídas y respuesta ante emergencias.',
     origen: 'MANUAL',
     estado: Course.STATUS.PUBLICADO,
     profesorRevisorId: 'usr_profesor',
@@ -152,22 +152,22 @@ export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) 
       {
         id: 'm1',
         orden: 1,
-        titulo: 'Módulo 1: Elementos de Protección Personal (EPP)',
-        contenido: 'Uso ininterrumpido de casco dieléctrico, visor térmico para fundición, polainas y guantes de carnaza. Todo elemento dañado debe sustituirse antes del inicio de turno.',
+        titulo: 'Módulo 1: Buen Trato y Derechos de la Persona Mayor',
+        contenido: 'Principios de trato digno, respeto a la autonomía y privacidad del residente, y detección y notificación de cualquier situación de maltrato.',
         tiempoEstimado: '10 min'
       },
       {
         id: 'm2',
         orden: 2,
-        titulo: 'Módulo 2: Manejo de Metales y Prevención de Quemaduras',
-        contenido: 'Protocolos de distancia segura para crisoles y cubas electrolíticas. Prohibición de presencia de humedad en moldes para evitar explosiones por vaporización súbita.',
+        titulo: 'Módulo 2: Prevención de Caídas y Movilización Segura',
+        contenido: 'Evaluación del riesgo de caída, uso correcto de sillas de ruedas y andadores, y técnicas de traslado cama-silla que protegen al residente y al cuidador.',
         tiempoEstimado: '15 min'
       },
       {
         id: 'm3',
         orden: 3,
-        titulo: 'Módulo 3: Plan de Evacuación y Primeros Auxilios',
-        contenido: 'Zonas seguras de encuentro, uso de duchas de emergencia y activación de la sirena de evacuación ante fugas de gases o conatos de incendio.',
+        titulo: 'Módulo 3: Emergencias y Plan de Evacuación del ELEAM',
+        contenido: 'Zonas de seguridad, evacuación de residentes con movilidad reducida, primeros auxilios básicos y activación de la cadena de aviso ante incendios o sismos.',
         tiempoEstimado: '12 min'
       }
     ],
@@ -179,23 +179,23 @@ export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) 
       preguntas: [
         {
           id: 'q1',
-          enunciado: '¿Por qué está estrictamente prohibido introducir herramientas o moldes húmedos en el aluminio fundido?',
+          enunciado: '¿Qué se debe hacer antes de trasladar a un residente con movilidad reducida desde la cama a la silla de ruedas?',
           opciones: [
-            'Porque el agua altera el color del aluminio final',
-            'Porque genera vaporización instantánea provocando una violenta explosión de metal',
-            'Porque enfría demasiado rápido la cuba electrolítica',
-            'No está prohibido siempre que se use mascarilla'
+            'Levantarlo rápido para no perder tiempo',
+            'Frenar la silla, explicarle la maniobra al residente y usar una técnica de movilización segura',
+            'Esperar a que el residente se traslade solo',
+            'Trasladarlo solo si lo pide un familiar'
           ],
           respuestaCorrecta: 1
         },
         {
           id: 'q2',
-          enunciado: '¿Cuál es el tiempo máximo de respuesta para acudir a la ducha de emergencia ante salpicadura química o térmica superficial?',
+          enunciado: 'Si un residente sufre una caída, ¿cuál es la primera acción correcta?',
           opciones: [
-            'Inmediato (menos de 10 segundos)',
-            'Al terminar el turno de trabajo',
-            'Después de avisar por escrito al supervisor',
-            'Dentro de los primeros 30 minutos'
+            'No moverlo, evaluar su estado y avisar de inmediato al profesional de salud de turno',
+            'Levantarlo de inmediato y sentarlo en una silla',
+            'Registrar la caída al final del turno',
+            'Esperar a que se levante por sí mismo'
           ],
           respuestaCorrecta: 0
         },
@@ -228,10 +228,10 @@ export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) 
 
   // Curso Borrador generado por IA esperando revisión humana (Human-in-the-Loop)
   const cursoBorrador = new Course({
-    id: 'course_protocolo_ambiental_ia',
+    id: 'course_protocolo_medicamentos_ia',
     tenantId: 'alumco',
-    titulo: '[BORRADOR IA] Protocolo Ambiental de Emisiones y Gestión de Residuos Sólidos',
-    descripcion: 'Borrador generado por el Workflow secuencial de Claude a partir del documento oficial Protocolo_Ambiental_2026.pdf. Requiere revisión del profesor.',
+    titulo: '[BORRADOR IA] Protocolo de Administración Segura de Medicamentos',
+    descripcion: 'Borrador generado por el Workflow secuencial de Claude a partir del documento oficial Protocolo_Medicamentos_2026.pdf. Requiere revisión del profesor.',
     origen: 'IA_GENERADO',
     estado: Course.STATUS.BORRADOR,
     profesorRevisorId: 'usr_profesor',
@@ -240,43 +240,43 @@ export async function populateInitialData({ tenantRepo, userRepo, courseRepo }) 
       {
         id: 'bm1',
         orden: 1,
-        titulo: 'Módulo 1: Clasificación de Escorias y Residuos Peligrosos',
-        contenido: 'Segregación en origen de residuos de alúmina, filtros de mangas y material refractario en tambores certificados.',
+        titulo: 'Módulo 1: Los 5 Correctos en la Administración de Medicamentos',
+        contenido: 'Verificación de residente, medicamento, dosis, vía y horario correctos antes de cada administración.',
         tiempoEstimado: '15 min'
       },
       {
         id: 'bm2',
         orden: 2,
-        titulo: 'Módulo 2: Monitoreo Continuo de Filtros de Aire',
-        contenido: 'Verificación de manómetros de presión diferencial en los sistemas de captación de humos y partículas en suspensión.',
+        titulo: 'Módulo 2: Registro y Almacenamiento de Medicamentos',
+        contenido: 'Registro en la ficha clínica de cada dosis administrada y almacenamiento seguro, rotulado y bajo llave de los medicamentos.',
         tiempoEstimado: '20 min'
       }
     ],
     evaluacion: new Evaluation({
       id: 'eval_borrador_1',
-      courseId: 'course_protocolo_ambiental_ia',
+      courseId: 'course_protocolo_medicamentos_ia',
       puntajeAprobacion: 70,
       maxIntentos: 2,
       preguntas: [
         {
           id: 'bq1',
-          enunciado: '¿Dónde deben depositarse las mangas filtrantes usadas con partículas de fundición?',
+          enunciado: '¿Qué debe verificarse antes de administrar un medicamento a un residente?',
           opciones: [
-            'En el contenedor municipal común',
-            'En tambores estancos de residuos peligrosos con rotulación oficial',
-            'En el patio trasero sin cubrir',
-            'Se deben incinerar al aire libre'
+            'Solo el nombre del medicamento',
+            'Los 5 correctos: residente, medicamento, dosis, vía y horario',
+            'Que el residente no esté durmiendo',
+            'Nada, basta con que esté en la receta'
           ],
           respuestaCorrecta: 1
         },
         {
           id: 'bq2',
-          enunciado: '¿Qué indicador avisa sobre una eventual saturación o fuga en los filtros de mangas?',
+          enunciado: '¿Dónde debe registrarse cada medicamento administrado?',
           opciones: [
-            'Variación anómala en el manómetro de presión diferencial',
-            'El color del techo de la planta',
-            'La temperatura ambiental externa',
-            'Ninguno, se revisan cada 5 años'
+            'En la ficha clínica del residente, con hora y firma de quien lo administró',
+            'En una hoja suelta en la sala de enfermería',
+            'No es necesario registrarlo',
+            'En el celular personal del cuidador'
           ],
           respuestaCorrecta: 0
         }

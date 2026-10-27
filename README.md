@@ -1,5 +1,7 @@
 # Plataforma Serverless de Capacitación y Cumplimiento Multi-Organización (Base Alumco)
 
+Plataforma de capacitación para **ONG Alumco**, organización sin fines de lucro que administra Establecimientos de Larga Estadía para Adultos Mayores (**ELEAM**) en Hualpén (Región del Biobío) y Coyhaique (Región de Aysén). Su personal (~120 colaboradores) debe capacitarse periódicamente según los protocolos de SENAMA.
+
 Aplicación serverless de inducción, capacitación y certificación basada íntegramente en la arquitectura de nube del **Certamen de Arquitectura de Sistemas**. Implementa **Clean Architecture**, base de datos NoSQL **Amazon DynamoDB**, patrones de resiliencia en la nube (**Circuit Breaker**, **Bulkhead**, **Retry con Backoff Exponencial**), flujo **Human-in-the-Loop (IA + Revisión Docente)**, soporte **Multi-Organización (White-label Theming)**, selector de **Modo Claro / Modo Oscuro** y control de **Despliegues Canarios (AWS SAM Canary Releases)**.
 
 ---
@@ -38,7 +40,7 @@ Permite adaptar en caliente la identidad visual y temática de la plataforma sin
   * Protección con **Circuit Breaker** (si se registran 5 fallas consecutivas de la API externa, se abre durante 60 segundos y recomienda la creación manual).
   * Aislamiento **Bulkhead** (máximo 2 ejecuciones concurrentes de IA para no degradar el rendimiento general).
 * **⚙️ Administrador & DevOps:**
-  * Reporte de cumplimiento por sede (Santiago, Antofagasta, Concepción).
+  * Reporte de cumplimiento por sede (ELEAM Hualpén y ELEAM Coyhaique).
   * Consola de monitoreo de telemetría de resiliencia del Circuit Breaker (estados `CLOSED`, `OPEN`, `HALF_OPEN`).
   * Registro de alertas de escalamiento emitidas por Amazon SES.
 
@@ -168,13 +170,13 @@ Si no tienes AWS CLI o SAM CLI instalados en tu computadora local:
 
 | Nombre | Rol | Sede | Cargo |
 | :--- | :--- | :--- | :--- |
-| **Felipe Heredia** | Colaborador (Alumno) | Antofagasta | Técnico de Fundición y Reciclaje |
-| **Ignacio Llarlluri** | Colaborador (Alumno) | Concepción | Operario de Planta |
-| **Javier Alcaino** | Colaborador (Alumno) | Santiago | Ensamblador de Estructuras |
-| **Prof. Andrea Soto** | Profesor (HITL) | Santiago | Coordinadora Académica & Revisor |
-| **Prof. Mauricio Morales** | Profesor (HITL) | Antofagasta | Especialista en Prevención de Riesgos |
-| **Carlos Mendoza** | Jefatura | Santiago | Jefe de Seguridad y Protocolos |
-| **Valentina Garrido** | Administrador & DevOps | Santiago | Directora de Operaciones & RRHH |
+| **Felipe Heredia** | Colaborador (Alumno) | ELEAM Coyhaique | Técnico en Enfermería (TENS) |
+| **Ignacio Llarlluri** | Colaborador (Alumno) | ELEAM Hualpén | Cuidador de Personas Mayores |
+| **Javier Alcaino** | Colaborador (Alumno) | ELEAM Coyhaique | Auxiliar de Servicio |
+| **Prof. Andrea Soto** | Profesor (HITL) | ELEAM Hualpén | Coordinadora Académica & Revisora |
+| **Prof. Mauricio Morales** | Profesor (HITL) | ELEAM Coyhaique | Enfermero Supervisor & Revisor |
+| **Carlos Mendoza** | Jefatura | ELEAM Hualpén | Jefe de Protocolos y Cumplimiento SENAMA |
+| **Valentina Garrido** | Administrador & DevOps | ELEAM Hualpén | Directora de Operaciones & RRHH |
 
 *También puedes registrar nuevos colaboradores o profesores en cualquier momento utilizando el botón **`🔑 Login / Registro`** en la esquina superior izquierda de la aplicación.*
 
