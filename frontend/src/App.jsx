@@ -237,20 +237,22 @@ function AppContent() {
         {activeRole === 'ADMIN' && <CanaryController currentTenantId={currentTenantId} />}
 
         {/* 3. VISTAS SEGÚN EL ROL ACTIVO */}
+        {/* key: al cambiar de usuario u organización, la vista se reinicia y no conserva el estado del usuario anterior */}
         {activeRole === 'COLABORADOR' && (
-          <ColaboradorView currentTenant={currentTenant} currentUser={currentUser} />
+          <ColaboradorView key={`${currentTenant.id}-${currentUser.id}`} currentTenant={currentTenant} currentUser={currentUser} />
         )}
 
         {activeRole === 'PROFESOR' && (
-          <ProfesorView currentTenant={currentTenant} currentUser={currentUser} />
+          <ProfesorView key={`${currentTenant.id}-${currentUser.id}`} currentTenant={currentTenant} currentUser={currentUser} />
         )}
 
         {activeRole === 'JEFATURA' && (
-          <JefaturaView currentTenant={currentTenant} currentUser={currentUser} />
+          <JefaturaView key={`${currentTenant.id}-${currentUser.id}`} currentTenant={currentTenant} currentUser={currentUser} />
         )}
 
         {activeRole === 'ADMIN' && (
           <AdminView
+            key={`${currentTenant.id}-${currentUser.id}`}
             currentTenant={currentTenant}
             currentUser={currentUser}
             onOpenBrandingModal={() => setIsBrandingModalOpen(true)}
