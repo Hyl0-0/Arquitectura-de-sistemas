@@ -293,7 +293,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, {
         circuitBreaker: {
           serviceName: cbState.serviceName,
-          state: cbState.state,
+          state: cbState.getEffectiveState(),
           failureCount: cbState.failureCount,
           failureThreshold: cbState.failureThreshold,
           cooldownSeconds: cbState.cooldownSeconds,

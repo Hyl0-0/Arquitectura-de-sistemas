@@ -101,6 +101,18 @@ export class CircuitBreakerState {
     return false;
   }
 
+  // Estado "efectivo": lo que el sistema haría si llegara una llamada ahora.
+  // No modifica nada; solo sirve para mostrar el estado real en el panel.
+  getEffectiveState() {
+    if (this.state === CircuitBreakerState.STATES.OPEN && this.lastFailureTime) {
+      const elapsedSeconds = (Date.now() - new Date(this.lastFailureTime).getTime()) / 1000;
+      if (elapsedSeconds >= this.cooldownSeconds) {
+        return CircuitBreakerState.STATES.HALF_OPEN;
+      }
+    }
+    return this.state;
+  }
+
   recordSuccess() {
     this.failureCount = 0;
     this.state = CircuitBreakerState.STATES.CLOSED;
