@@ -1,4 +1,12 @@
+import { createHash } from 'node:crypto';
 import { Tenant } from '../domain/entities/Tenant.js';
+
+// Convierte un userId en un número fijo entre 0 y 99 (el "casillero" del usuario).
+// Mismo userId => mismo casillero, siempre. Un usuario va al canario si su casillero < peso configurado.
+export function canaryBucket(userId) {
+  const digest = createHash('sha256').update(String(userId)).digest();
+  return digest.readUInt32BE(0) % 100;
+}
 
 export class TenantThemingUseCase {
   constructor({ tenantRepository }) {
@@ -73,13 +81,19 @@ export class CanaryRoutingUseCase {
       return { version: 'canary', reason: 'PILOT_TENANT' };
     }
 
-    // Regla de distribución probabilística basada en hash o número aleatorio
-    const randomVal = Math.floor(Math.random() * 100);
-    const isCanary = randomVal < config.weight;
+    // Sin userId no podemos asignar un "casillero" estable: va a la versión estable (la más segura)
+    if (!userId) {
+      return { version: 'stable', weight: config.weight, reason: 'NO_USER_ID' };
+    }
+
+    // Distribución determinista: el mismo usuario siempre cae en el mismo casillero (0-99)
+    const bucket = canaryBucket(userId);
+    const isCanary = bucket < config.weight;
 
     return {
       version: isCanary ? 'canary' : 'stable',
       weight: config.weight,
+      bucket,
       reason: isCanary ? 'TRAFFIC_SPLIT_CANARY' : 'TRAFFIC_SPLIT_STABLE'
     };
   }
